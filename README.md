@@ -73,7 +73,7 @@ Crear archivo .env en la raíz del proyecto:
 ## 📁 Estructura del Proyecto
 
 ```bash
-vectorizacion_final/
+document_vectorization/
 ├── backend/
 │   └── app/
 │       ├── main.py              # API FastAPI principal
