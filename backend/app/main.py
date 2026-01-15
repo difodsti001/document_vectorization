@@ -473,8 +473,6 @@ async def search_similar_documents(
         ]
     }
 
-# Agregar este endpoint a main.py
-
 @app.post("/api/cleanup-uploads")
 async def cleanup_uploads():
     """
