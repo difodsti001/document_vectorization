@@ -58,7 +58,7 @@ batch_processing_status: Dict[str, Dict[str, Any]] = {}
 
 # ==================== INTERFAZ WEB ====================
 
-@app.get("/", response_class=HTMLResponse, tags=["Interfaz"])
+@app.get("/vectorizacion", response_class=HTMLResponse, tags=["Interfaz"])
 async def home(request: Request):
     """
     🌐 Interfaz web principal del sistema de vectorización
@@ -123,7 +123,7 @@ async def health_check():
         "service": "document-vectorization",
         "version": settings.API_VERSION,
         "endpoints": {
-            "interfaz_web": "http://localhost:8100/",
+            "interfaz_web": "http://localhost:8100/vectorizacion",
             "api_docs": "http://localhost:8100/docs"
         }
     }
@@ -533,7 +533,7 @@ if __name__ == "__main__":
     print("\n" + "="*70)
     print("🌐 SISTEMA DE VECTORIZACIÓN DOCUMENTAL")
     print("="*70)
-    print(f"📍 Interfaz Web: http://{settings.API_HOST}:{settings.API_PORT}/vectorización")
+    print(f"📍 Interfaz Web: http://{settings.API_HOST}:{settings.API_PORT}/vectorizacion")
     print(f"📖 Documentación: http://{settings.API_HOST}:{settings.API_PORT}/docs")
     print(f"🔧 API Colecciones: http://localhost:9000/docs")
     print("="*70 + "\n")
