@@ -74,12 +74,9 @@ Crear archivo .env en la raíz del proyecto:
 
 ```bash
 document_vectorization/
-├── backend/
-│   └── app/
-│       ├── main.py              # API FastAPI principal
-│       ├── services.py          # Servicios de procesamiento
-│       ├── settings.py          # Configuración
-│       └── __pycache__/
+├── main.py              # API FastAPI principal
+├── services.py          # Servicios de procesamiento
+├── settings.py          # Configuración
 ├── frontend/
 │   └── interfaz.html            # Panel web
 ├── uploads/                     # Documentos temporales
@@ -92,13 +89,11 @@ document_vectorization/
 ## 🔧 Uso
 Iniciar Backend
 ```bash
-cd backend/app
+cd document_vectorization
 python main.py
 ```
-La API estará disponible en: http://localhost:8100
-Documentación interactiva: http://localhost:8100/docs
-Acceder al Frontend
-Abrir en navegador: interfaz.html (o servir con un servidor local)
+La API estará disponible en documentación interactiva: http://localhost:8100/docs
+Acceder al Frontend (interfaz.html) es abrir en navegador en http://localhost:8100
 
 ```bash
 # Con Python
@@ -221,7 +216,7 @@ Respuesta:
 {
   "status": "healthy",
   "service": "document-vectorization-multiupload",
-  "version": "2.0.0"
+  "version": "1.0.0"
 }
 ```
 
