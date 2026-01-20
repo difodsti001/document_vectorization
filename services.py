@@ -1,6 +1,5 @@
 """
 Servicios consolidados para el sistema de vectorización
-Incluye: carga, validación, procesamiento y vectorización
 """
 import re
 import os

@@ -1,15 +1,14 @@
 """
 FastAPI Backend - Sistema de Vectorización de Documentos
-Versión con soporte para MULTICARGA de documentos
 """
-from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks, Query, Form
+from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from typing import Optional, Dict, Any, List
 import uuid
 from pathlib import Path
-import datetime
-import asyncio
 from contextlib import asynccontextmanager
 
 from settings import settings, validate_settings
@@ -26,6 +25,10 @@ from services import (
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("🚀 Iniciando aplicación...")
+    
+    # Crear directorio templates si no existe
+    Path("frontend").mkdir(exist_ok=True)
+    
     validate_settings()
     init_vectorization_service()
     print("✅ VectorizationService inicializado")
@@ -46,10 +49,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+templates = Jinja2Templates(directory="frontend")
+
 UPLOAD_DIR = settings.UPLOAD_DIR
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 batch_processing_status: Dict[str, Dict[str, Any]] = {}
+
+# ==================== INTERFAZ WEB ====================
+
+@app.get("/", response_class=HTMLResponse, tags=["Interfaz"])
+async def home(request: Request):
+    """
+    🌐 Interfaz web principal del sistema de vectorización
+    
+    Accede aquí para:
+    - Seleccionar colecciones
+    - Cargar documentos
+    - Vectorizar archivos
+    - Buscar por similitud semántica
+    """
+    return templates.TemplateResponse("interfaz.html", {"request": request})
 
 # ==================== MODELOS ====================
 
@@ -95,7 +115,21 @@ class SearchRequest(BaseModel):
 
 # ==================== ENDPOINTS ====================
 
-@app.post("/api/upload-batch", response_model=BatchValidationResponse)
+@app.get("/health", tags=["Sistema"])
+async def health_check():
+    """Health check del servicio"""
+    return {
+        "status": "healthy",
+        "service": "document-vectorization",
+        "version": settings.API_VERSION,
+        "endpoints": {
+            "interfaz_web": "http://localhost:8100/",
+            "api_docs": "http://localhost:8100/docs"
+        }
+    }
+
+
+@app.post("/api/upload-batch", response_model=BatchValidationResponse, tags=["Vectorización"])
 async def upload_batch(collection_name: str = Query(..., description="Colección destino"),
     files: List[UploadFile] = File(...)
     ):
@@ -115,7 +149,6 @@ async def upload_batch(collection_name: str = Query(..., description="Colección
     files_info = []
     saved_files_paths = {}
 
-    # Importar función de verificación de duplicados
     from services import check_duplicate_by_filename
 
     for file in files:
@@ -136,7 +169,6 @@ async def upload_batch(collection_name: str = Query(..., description="Colección
                 failed_count += 1
                 continue
 
-            # Guardar archivo
             file_path = UPLOAD_DIR / file.filename
             if file_path.exists():
                 file_path.unlink()
@@ -145,7 +177,6 @@ async def upload_batch(collection_name: str = Query(..., description="Colección
 
             saved_files_paths[file_id] = str(file_path)
 
-            # Validar estructura
             validation = await validate_document_structure(file_path)
 
             has_non_textual = (
@@ -153,7 +184,7 @@ async def upload_batch(collection_name: str = Query(..., description="Colección
                 validation["total_tables"] > 0
             )
 
-            # VERIFICAR SI ES DUPLICADO
+
             duplicate_check = check_duplicate_by_filename(file.filename, collection_name)
             is_duplicate = duplicate_check["exists"]
             duplicate_chunks = duplicate_check["total_chunks"]
@@ -185,7 +216,6 @@ async def upload_batch(collection_name: str = Query(..., description="Colección
             ))
             failed_count += 1
 
-    # Guardar batch
     batch_files = {}
     for f in files_info:
         if f.status == "validated":
@@ -200,7 +230,7 @@ async def upload_batch(collection_name: str = Query(..., description="Colección
                 "status": "validated",
                 "progress": 0,
                 "error": None,
-                "is_duplicate": f.is_duplicate,  # Guardar info de duplicado
+                "is_duplicate": f.is_duplicate, 
                 "duplicate_chunks": f.duplicate_chunks
             }
 
@@ -210,7 +240,7 @@ async def upload_batch(collection_name: str = Query(..., description="Colección
         "total_files": len(files),
         "completed_files": 0,
         "failed_files": failed_count,
-        "collection_name": collection_name  # Guardar colección ya desde validación
+        "collection_name": collection_name  
     }
 
     message = f"✅ {validated_count} archivo(s) validado(s)"
@@ -226,7 +256,7 @@ async def upload_batch(collection_name: str = Query(..., description="Colección
         message=message
     )
 
-@app.post("/api/confirm-duplicates/{batch_id}")
+@app.post("/api/confirm-duplicates/{batch_id}", tags=["Vectorización"])
 async def confirm_duplicate_replacement(
     batch_id: str,
     files_to_replace: List[str] = Query(..., description="Lista de file_ids a reemplazar")
@@ -252,7 +282,6 @@ async def confirm_duplicate_replacement(
         file_info = batch["files"][file_id]
         filename = file_info["filename"]
 
-        # Eliminar documento antiguo
         result = delete_document_from_collection(filename, collection_name)
 
         deleted_summary.append({
@@ -261,7 +290,6 @@ async def confirm_duplicate_replacement(
             "deleted_chunks": result.get("deleted_chunks", 0)
         })
 
-        # Marcar que ya se eliminó para no intentar de nuevo
         file_info["duplicate_deleted"] = True
 
     return {
@@ -271,7 +299,7 @@ async def confirm_duplicate_replacement(
     }
 
 
-@app.post("/api/vectorize-batch/{batch_id}")
+@app.post("/api/vectorize-batch/{batch_id}", tags=["Vectorización"])
 async def start_batch_vectorization(
     batch_id: str,
     background_tasks: BackgroundTasks,
@@ -288,11 +316,9 @@ async def start_batch_vectorization(
     if batch["overall_status"] != "validated":
         raise HTTPException(status_code=400, detail="Batch no validado")
 
-    # Guardar colección seleccionada
     batch["collection_name"] = collection_name
     batch["overall_status"] = "processing"
 
-    # Ejecutar en background
     background_tasks.add_task(process_batch_vectorization, batch_id)
 
     return {
@@ -326,7 +352,6 @@ async def process_batch_vectorization(batch_id: str):
 
             print(f"📄 Procesando: {file_path}")
 
-            # Extracción
             file_info["progress"] = 25
             file_info["current_step"] = "Extrayendo y normalizando..."
 
@@ -334,13 +359,11 @@ async def process_batch_vectorization(batch_id: str):
             normalized_text = extracted["normalized_text"]
             document_hash = extracted["document_hash"]
 
-            # Chunking
             file_info["progress"] = 50
             file_info["current_step"] = "Segmentando documento..."
 
             chunks = await chunk_text_semantic(normalized_text)
 
-            # Vectorización
             file_info["progress"] = 75
             file_info["current_step"] = "Generando embeddings..."
 
@@ -361,7 +384,6 @@ async def process_batch_vectorization(batch_id: str):
                 metadata=metadata
             )
 
-            # Completado
             file_info["status"] = "completed"
             file_info["progress"] = 100
             file_info["current_step"] = "✅ Completado"
@@ -384,7 +406,7 @@ async def process_batch_vectorization(batch_id: str):
     batch["current_file"] = None
 
 
-@app.get("/api/batch-progress/{batch_id}", response_model=BatchProgressResponse)
+@app.get("/api/batch-progress/{batch_id}", response_model=BatchProgressResponse, tags=["Vectorización"])
 async def get_batch_progress(batch_id: str):
     """
     Endpoint 3: Obtiene el progreso del batch completo
@@ -421,7 +443,7 @@ async def get_batch_progress(batch_id: str):
     )
 
 
-@app.delete("/api/batch/{batch_id}")
+@app.delete("/api/batch/{batch_id}", tags=["Vectorización"])
 async def delete_batch(batch_id: str):
     """
     Endpoint 4: Limpia un batch completado
@@ -429,7 +451,6 @@ async def delete_batch(batch_id: str):
     if batch_id in batch_processing_status:
         batch = batch_processing_status[batch_id]
 
-        # Limpiar archivos temporales
         for file_info in batch["files"].values():
             file_path = file_info.get("file_path")
             if file_path:
@@ -441,7 +462,7 @@ async def delete_batch(batch_id: str):
     raise HTTPException(status_code=404, detail="Batch no encontrado")
 
 
-@app.post("/api/search")
+@app.post("/api/search", tags=["Búsqueda"])
 async def search_similar_documents(
     request: SearchRequest,
     collection_name: str = Query(..., description="Colección a consultar")
@@ -473,7 +494,7 @@ async def search_similar_documents(
         ]
     }
 
-@app.post("/api/cleanup-uploads")
+@app.post("/api/cleanup-uploads", tags=["Mantenimiento"])
 async def cleanup_uploads():
     """
     Endpoint 6: Mantenimiento, limpia archivos temporales huérfanos
@@ -505,18 +526,21 @@ async def cleanup_uploads():
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error en limpieza: {str(e)}")
-
-# ==================== HEALTH ====================
-
-@app.get("/health")
-async def health_check():
-    return {
-        "status": "healthy",
-        "service": "document-vectorization-multiupload",
-        "version": "2.0.0"
-    }
-
+    
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host=settings.API_HOST, port=settings.API_PORT)
+    print("\n" + "="*70)
+    print("🌐 SISTEMA DE VECTORIZACIÓN DOCUMENTAL")
+    print("="*70)
+    print(f"📍 Interfaz Web: http://{settings.API_HOST}:{settings.API_PORT}/vectorización")
+    print(f"📖 Documentación: http://{settings.API_HOST}:{settings.API_PORT}/docs")
+    print(f"🔧 API Colecciones: http://localhost:9000/docs")
+    print("="*70 + "\n")
+    
+    uvicorn.run(
+        app, 
+        host=settings.API_HOST, 
+        port=settings.API_PORT,
+        log_level="info"
+    )
