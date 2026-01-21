@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Vectorización | MINEDU</title>
+    <style>
+        :root {
+            --gobpe-blue-800: #184397;
+            --gobpe-blue-700: #0056AC;
+            --gobpe-blue-650: #1363D0;
+            --gobpe-blue-500: #4597E8;
+            --gobpe-blue-400: #E1F0FF;
+            --gobpe-blue-200: #F2F9FF;
+            --gobpe-blue-150: #F4F8FB;
+            --gobpe-neutral-800: #0D1028;
+            --gobpe-neutral-600: #555869;
+            --gobpe-neutral-300: #DEE3EA;
+            --gobpe-neutral-100: #F6F9FC;
+            --gobpe-gray-800: #26292E;
+            --gobpe-gray-100: #FFFFFF;
+            --gobpe-green-800: #126B49;
+            --gobpe-green-700: #1B9D6B;
+            --gobpe-green-400: #E3F3EC;
+            --gobpe-red-700: #DC362E;
+            --gobpe-red-200: #FCEEEE;
+            --gobpe-orange-800: #D75600;
+            --gobpe-orange-700: #FF6701;
+            --gobpe-orange-400: #FFF3EA;
+            --gobpe-yellow-500: #FFD147;
+            --gobpe-yellow-400: #FFE8A3;
+            --gobpe-purple-700: #5D2EE5;
+            --gobpe-purple-200: #F6F6FE;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, var(--gobpe-blue-800) 0%, var(--gobpe-blue-700) 50%, var(--gobpe-blue-650) 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: var(--gobpe-gray-100);
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(24, 67, 151, 0.25);
+            max-width: 1000px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .header {
+            background: var(--gobpe-blue-700);
+            color: var(--gobpe-gray-100);
+            padding: 32px 40px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+            margin-top: 6px;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .module {
+            display: none;
+        }
+
+        .module.active {
+            display: block;
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* SELECTOR DE COLECCIÓN */
+        .collection-selector h2 {
+            color: var(--gobpe-gray-800);
+            font-size: 22px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .collection-search {
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 16px 12px 44px;
+            border: 2px solid var(--gobpe-neutral-300);
+            border-radius: 8px;
+            font-size: 15px;
+            transition: all 0.3s;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23555869' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'%3E%3C/circle%3E%3Cpath d='m21 21-4.35-4.35'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: 14px center;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--gobpe-blue-700);
+            box-shadow: 0 0 0 3px var(--gobpe-blue-400);
+        }
+
+        .collections-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 32px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        .collections-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .collections-list::-webkit-scrollbar-track {
+            background: var(--gobpe-neutral-300);
+            border-radius: 4px;
+        }
+
+        .collections-list::-webkit-scrollbar-thumb {
+            background: var(--gobpe-blue-700);
+            border-radius: 4px;
+        }
+
+        .collections-list::-webkit-scrollbar-thumb:hover {
+            background: var(--gobpe-blue-800);
+        }
+
+        .collection-item {
+            background: var(--gobpe-neutral-100);
+            border: 2px solid var(--gobpe-neutral-300);
+            border-radius: 8px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .collection-item:hover {
+            border-color: var(--gobpe-blue-650);
+            transform: translateX(4px);
+        }
+
+        .collection-item.selected {
+            border-color: var(--gobpe-blue-700);
+            background: var(--gobpe-blue-150);
+            box-shadow: 0 4px 12px rgba(0, 86, 172, 0.15);
+        }
+
+        .collection-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--gobpe-gray-800);
+            margin-bottom: 8px;
+        }
+
+        .collection-description {
+            font-size: 14px;
+            color: var(--gobpe-neutral-600);
+            line-height: 1.5;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--gobpe-neutral-600);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--gobpe-neutral-300);
+            border-top-color: var(--gobpe-blue-700);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ZONA DE CARGA */
+        .upload-section {
+            margin-bottom: 32px;
+        }
+
+        .naming-convention {
+            background: var(--gobpe-yellow-400);
+            border-left: 4px solid var(--gobpe-orange-700);
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+
+        .naming-convention h3 {
+            font-size: 15px;
+            color: var(--gobpe-orange-800);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .naming-convention p {
+            font-size: 14px;
+            color: var(--gobpe-gray-800);
+            line-height: 1.6;
+        }
+
+        .naming-example {
+            background: var(--gobpe-gray-100);
+            padding: 10px 14px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: var(--gobpe-purple-700);
+            font-weight: 600;
+        }
+
+        .upload-zone {
+            border: 3px dashed var(--gobpe-neutral-300);
+            border-radius: 12px;
+            padding: 60px 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: var(--gobpe-blue-150);
+        }
+
+        .upload-zone:hover {
+            border-color: var(--gobpe-blue-650);
+            background: var(--gobpe-blue-200);
+        }
+
+        .upload-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .selected-collection-badge {
+            background: var(--gobpe-purple-200);
+            border: 2px solid var(--gobpe-purple-700);
+            color: var(--gobpe-purple-700);
+            padding: 8px 16px;
+            border-radius: 6px;
+            display: inline-block;
+            margin-top: 16px;
+            font-weight: 600;
+        }
+
+        .file-list {
+            margin-top: 24px;
+        }
+
+        .file-item {
+            background: var(--gobpe-neutral-100);
+            border: 2px solid var(--gobpe-neutral-300);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .file-icon {
+            font-size: 28px;
+        }
+
+        .file-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gobpe-gray-800);
+        }
+
+        .remove-btn {
+            background: var(--gobpe-red-200);
+            color: var(--gobpe-red-700);
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* MODAL DE DUPLICADOS */
+        .duplicate-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+        }
+
+        .duplicate-modal.active {
+            display: flex;
+        }
+
+        .duplicate-content {
+            background: var(--gobpe-gray-100);
+            border-radius: 12px;
+            padding: 32px;
+            max-width: 600px;
+            width: 90%;
+        }
+
+        .duplicate-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .duplicate-icon {
+            font-size: 48px;
+        }
+
+        .duplicate-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--gobpe-orange-800);
+        }
+
+        .duplicate-list {
+            background: var(--gobpe-orange-400);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+        .duplicate-item {
+            padding: 12px;
+            background: var(--gobpe-gray-100);
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+
+        .duplicate-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .duplicate-item-name {
+            font-weight: 600;
+            color: var(--gobpe-gray-800);
+            margin-bottom: 4px;
+        }
+
+        .duplicate-item-info {
+            font-size: 13px;
+            color: var(--gobpe-neutral-600);
+        }
+
+        /* VALIDACIÓN */
+        .validation-file-card {
+            background: var(--gobpe-neutral-100);
+            border: 2px solid var(--gobpe-neutral-300);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .validation-file-card.success {
+            border-left: 4px solid var(--gobpe-green-700);
+        }
+
+        .validation-file-card.duplicate {
+            border-left: 4px solid var(--gobpe-orange-700);
+            background: var(--gobpe-orange-400);
+        }
+
+        .validation-file-card.error {
+            border-left: 4px solid var(--gobpe-red-700);
+        }
+
+        .validation-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .validation-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 13px;
+            color: var(--gobpe-neutral-600);
+        }
+
+        /* BÚSQUEDA */
+        .search-section {
+            background: var(--gobpe-neutral-100);
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 32px;
+            border: 2px solid var(--gobpe-neutral-300);
+        }
+
+        .search-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .search-header h3 {
+            font-size: 18px;
+            color: var(--gobpe-gray-800);
+        }
+
+        .search-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gobpe-gray-800);
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 12px;
+            border: 2px solid var(--gobpe-neutral-300);
+            border-radius: 8px;
+            font-size: 15px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--gobpe-blue-700);
+        }
+
+        .search-results {
+            margin-top: 24px;
+        }
+
+        .result-card {
+            background: var(--gobpe-gray-100);
+            border: 2px solid var(--gobpe-neutral-300);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 12px;
+        }
+
+        .result-score {
+            background: var(--gobpe-green-400);
+            color: var(--gobpe-green-800);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-weight: 700;
+            display: inline-block;
+            margin-bottom: 12px;
+        }
+
+        .result-text {
+            color: var(--gobpe-gray-800);
+            line-height: 1.6;
+            margin-top: 12px;
+        }
+
+        /* BOTONES */
+        .button-group {
+            display: flex;
+            gap: 16px;
+            margin-top: 32px;
+        }
+
+        button {
+            flex: 1;
+            padding: 14px 28px;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: var(--gobpe-blue-700);
+            color: var(--gobpe-gray-100);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--gobpe-blue-800);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--gobpe-gray-100);
+            color: var(--gobpe-gray-800);
+            border-color: var(--gobpe-neutral-300);
+        }
+
+        .btn-danger {
+            background: var(--gobpe-red-700);
+            color: var(--gobpe-gray-100);
+        }
+
+        .btn-warning {
+            background: var(--gobpe-orange-700);
+            color: var(--gobpe-gray-100);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .alert {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+        }
+
+        .alert-error {
+            background: var(--gobpe-red-200);
+            color: var(--gobpe-red-700);
+            border-left-color: var(--gobpe-red-700);
+        }
+
+        @media (max-width: 768px) {
+            .button-group {
+                flex-direction: column;
+            }
+        }
+
+        /* BOTÓN FLOTANTE */
+        .floating-search-btn {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            border: none;
+            background: var(--gobpe-blue-700);
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+            z-index: 2000;
+        }
+
+        .floating-search-btn:hover {
+            background: var(--gobpe-blue-800);
+        }
+
+        /* PANEL LATERAL */
+        .search-panel {
+            position: fixed;
+            top: 0;
+            right: -420px;
+            width: 420px;
+            height: 100%;
+            background: var(--gobpe-gray-100);
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.2);
+            padding: 24px;
+            transition: right 0.35s ease;
+            z-index: 2500;
+            overflow-y: auto;
+        }
+
+        .search-panel.active {
+            right: 0;
+        }
+
+        .search-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .search-panel-header button {
+            background: none;
+            border: none;
+            font-size: 22px;
+            cursor: pointer;
+        }
+
+        .search-panel-subtitle {
+            font-size: 13px;
+            color: var(--gobpe-neutral-600);
+            margin-bottom: 16px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Sistema de Vectorización Documental</h1>
+            <p>Procesamiento inteligente de documentos educativos</p>
+        </div>
+
+        <div class="content">
+            <!-- MÓDULO 0: SELECTOR DE COLECCIÓN -->
+            <div id="module-collections" class="module active">
+                <div class="collection-selector">
+                    <h2>Selecciona una colección de trabajo</h2>
+
+                    <div id="collectionsLoading" class="loading">
+                        <div class="spinner"></div>
+                        <p>Cargando colecciones...</p>
+                    </div>
+
+                    <div class="collection-search" id="collectionSearch" style="display: none;">
+                        <input 
+                            type="text" 
+                            id="searchCollectionInput" 
+                            class="search-input" 
+                            placeholder="Buscar colección..."
+                            oninput="filterCollections(this.value)"
+                        >
+                    </div>
+
+                    <div id="collectionsList" class="collections-list" style="display: none;"></div>
+
+                    <div id="noResults" class="no-results" style="display: none;">
+                        <span style="font-size: 48px;">🔍</span>
+                        <p style="margin-top: 12px;">No se encontraron colecciones</p>
+                    </div>
+
+                    <div class="button-group" id="collectionButtons" style="display: none;">
+                        <button class="btn-secondary" onclick="loadCollections()">
+                            🔄 Actualizar
+                        </button>
+                        <button class="btn-primary" id="btnContinue" disabled onclick="continueToUpload()">
+                            Continuar →
+                        </button>
+                    </div>
+
+                    <div id="noCollections" style="display: none; text-align: center; padding: 40px;">
+                        <p style="color: var(--gobpe-neutral-600); margin-bottom: 20px;">
+                            No hay colecciones disponibles
+                        </p>
+                        <button class="btn-primary" onclick="window.open('http://91.99.108.245/:9000/docs', '_blank')"> 
+                            Crear colección
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MÓDULO 1: CARGA DE DOCUMENTOS -->
+            <div id="module-upload" class="module">
+                <div class="upload-section">
+                    <!-- Recordatorio de nomenclatura -->
+                    <div class="naming-convention">
+                        <h3>📋 Nomenclatura de archivos</h3>
+                        <p>Los documentos deben seguir esta estructura:</p>
+                        <div class="naming-example">
+                            Nombre_del_programa_Curso#_Unidad#_Sesión#.pdf
+                        </div>
+                        <p style="margin-top: 10px; font-size: 13px;">
+                            Ejemplo: <strong>Aprendo_en_Casa_Curso1_Unidad2_Sesión3.pdf</strong>
+                        </p>
+                    </div>
+
+                    <div class="upload-zone" id="uploadZone">
+                        <div class="upload-icon">📚</div>
+                        <h3 style="color: var(--gobpe-blue-800); margin-bottom: 12px;">
+                            Arrastra tus documentos aquí
+                        </h3>
+                        <p style="color: var(--gobpe-neutral-600);">
+                            o haz clic para seleccionar
+                        </p>
+                        <div class="selected-collection-badge">
+                            🗂️ Colección: <span id="selectedCollectionName">-</span>
+                        </div>
+                    </div>
+
+                    <input type="file" id="fileInput" style="display: none;" accept=".pdf,.docx" multiple>
+
+                    <div id="fileList" class="file-list" style="display: none;"></div>
+
+                    <div id="uploadError" style="display: none;"></div>
+
+                    <!-- BOTÓN FLOTANTE DE BÚSQUEDA -->
+                    <button id="floatingSearchBtn" class="floating-search-btn" title="Búsqueda semántica">
+                        🔍
+                    </button>
+
+                    <!-- PANEL FLOTANTE DE BÚSQUEDA -->
+                    <div id="searchPanel" class="search-panel">
+                        <div class="search-panel-header">
+                            <h3>🔍 Búsqueda semántica</h3>
+                            <button onclick="toggleSearchPanel()">✖</button>
+                        </div>
+
+                        <p class="search-panel-subtitle">
+                            Colección: <strong id="searchCollectionName">-</strong>
+                        </p>
+
+                        <form onsubmit="performSearch(event)" class="search-form">
+                            <div class="form-group">
+                                <label>Consulta</label>
+                                <input type="text" id="searchQuery" placeholder="Ej: ¿Qué es la metacognición?" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Resultados</label>
+                                <select id="topK">
+                                    <option value="3">Top 3</option>
+                                    <option value="5">Top 5</option>
+                                    <option value="10">Top 10</option>
+                                </select>
+                            </div>
+
+                            <button type="submit" class="btn-primary">Buscar</button>
+                        </form>
+
+                        <div id="searchResults" class="search-results"></div>
+                    </div>
+
+                    <div class="button-group" id="uploadButtons" style="display: none;">
+                        <button class="btn-secondary" onclick="backToCollections()">
+                            ← Cambiar colección
+                        </button>
+                        <button class="btn-primary" onclick="validateFiles()">
+                            Validar archivos →
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MÓDULO 2: VALIDACIÓN -->
+            <div id="module-validation" class="module">
+                <h2 style="margin-bottom: 24px; color: var(--gobpe-gray-800);">Validación de archivos</h2>
+
+                <div id="validationList"></div>
+
+                <div class="button-group">
+                    <button class="btn-secondary" onclick="backToUpload()">
+                        ← Regresar
+                    </button>
+                    <button class="btn-primary" id="btnStartVectorization" disabled onclick="startVectorization()">
+                        Iniciar vectorización →
+                    </button>
+                </div>
+            </div>
+
+            <!-- MÓDULO 3: VECTORIZACIÓN -->
+
+            <div id="module-vectorization" class="module">
+                <h2 style="margin-bottom: 24px; text-align: center;">Procesando documentos...</h2>
+
+                <div style="text-align: center; margin: 40px 0;">
+                    <!-- SPINNER -->
+                    <div id="mainSpinner" class="spinner" style="width: 80px; height: 80px; border-width: 6px;"></div>
+                    <p id="progressText" style="font-size: 16px; color: var(--gobpe-neutral-600); margin-top: 20px;">
+                        Iniciando...
+                    </p>
+                </div>
+
+                <!-- BARRA DE PROGRESO GLOBAL -->
+                <div style="margin: 30px 0;">
+                    <div style="background: var(--gobpe-neutral-300); border-radius: 10px; overflow: hidden; height: 20px;">
+                        <div id="progressBar"
+                            style="height: 100%; width: 0%; background: var(--gobpe-blue-700); transition: width 0.4s ease;">
+                        </div>
+                    </div>
+                    <p id="progressPercent"
+                    style="margin-top: 8px; text-align: center; font-weight: 600; color: var(--gobpe-gray-800);">
+                        0%
+                    </p>
+                </div>
+
+                <!-- PROGRESO POR ARCHIVO (opcional, se llena dinámicamente) -->
+                <div id="filesProgress"></div>
+
+                <!-- MENSAJE FINAL -->
+                <div id="completionMessage" style="display: none; text-align: center; padding: 40px;">
+                    <div style="font-size: 80px; margin-bottom: 20px;">✅</div>
+                    <h2 style="color: var(--gobpe-green-800); margin-bottom: 16px;">
+                        ¡Vectorización completada!
+                    </h2>
+                    <p style="color: var(--gobpe-neutral-600); margin-bottom: 32px;">
+                        Los documentos fueron procesados correctamente.<br>
+                        Ya puedes cargar y vectorizar nuevos documentos.
+                    </p>
+                    <button class="btn-primary" onclick="resetToCollections()" style="max-width: 300px; margin: 0 auto;">
+                        Procesar otro documento
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE DUPLICADOS -->
+    <div class="duplicate-modal" id="duplicateModal">
+        <div class="duplicate-content">
+            <div class="duplicate-header">
+                <span class="duplicate-icon">⚠️</span>
+                <div>
+                    <h2 class="duplicate-title">Documentos duplicados detectados</h2>
+                    <p style="color: var(--gobpe-neutral-600); font-size: 14px; margin-top: 4px;">
+                        Los siguientes archivos ya existen en la colección
+                    </p>
+                </div>
+            </div>
+
+            <div class="duplicate-list" id="duplicateList"></div>
+
+            <p style="font-size: 14px; color: var(--gobpe-gray-800); margin-bottom: 24px;">
+                Si continúas, los documentos antiguos serán <strong>reemplazados completamente</strong> por las nuevas versiones.
+            </p>
+
+            <div class="button-group">
+                <button class="btn-secondary" onclick="closeDuplicateModal()">
+                    Cancelar
+                </button>
+                <button class="btn-warning" onclick="confirmReplacement()">
+                    Reemplazar documentos
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const COLLECTIONS_API = 'http://91.99.108.245:9000/api';
+        const VECTORIZATION_API = 'http://91.99.108.245:8100/api';
+
+        let selectedCollection = null;
+        let selectedFiles = [];
+        let currentBatchId = null;
+        let duplicateFiles = [];
+        let validationData = null;
+        let allCollections = []; // Guardamos todas las colecciones para el filtro
+
+        // ============ COLECCIONES ============
+        async function loadCollections() {
+            document.getElementById('collectionsLoading').style.display = 'block';
+            document.getElementById('collectionsList').style.display = 'none';
+            document.getElementById('collectionSearch').style.display = 'none';
+            document.getElementById('noCollections').style.display = 'none';
+            document.getElementById('noResults').style.display = 'none';
+
+            try {
+                const response = await fetch(`${COLLECTIONS_API}/collections`);
+                const collections = await response.json();
+
+                if (!collections.length) {
+                    document.getElementById('noCollections').style.display = 'block';
+                    document.getElementById('collectionsLoading').style.display = 'none';
+                    return;
+                }
+
+                allCollections = collections; // Guardar todas las colecciones
+                renderCollections(collections);
+
+            } catch (error) {
+                showError('Error al cargar colecciones');
+            }
+        }
+
+        function renderCollections(collections) {
+            const list = document.getElementById('collectionsList');
+            list.innerHTML = '';
+
+            collections.forEach(col => {
+                const item = document.createElement('div');
+                item.className = 'collection-item';
+                item.dataset.name = col.name;
+                item.onclick = () => selectCollection(col);
+
+                item.innerHTML = `
+                    <div class="collection-name">${col.name}</div>
+                    <div class="collection-description">${col.description || 'Sin descripción'}</div>
+                `;
+
+                list.appendChild(item);
+            });
+
+            document.getElementById('collectionsLoading').style.display = 'none';
+            document.getElementById('collectionSearch').style.display = 'block';
+            document.getElementById('collectionsList').style.display = 'flex';
+            document.getElementById('collectionButtons').style.display = 'flex';
+        }
+
+        function filterCollections(searchTerm) {
+            const term = searchTerm.toLowerCase().trim();
+            
+            if (term === '') {
+                // Mostrar todas las colecciones
+                renderCollections(allCollections);
+                document.getElementById('noResults').style.display = 'none';
+                return;
+            }
+
+            const filtered = allCollections.filter(col => 
+                col.name.toLowerCase().includes(term) || 
+                (col.description && col.description.toLowerCase().includes(term))
+            );
+
+            if (filtered.length === 0) {
+                document.getElementById('collectionsList').style.display = 'none';
+                document.getElementById('noResults').style.display = 'block';
+            } else {
+                document.getElementById('noResults').style.display = 'none';
+                renderCollections(filtered);
+            }
+        }
+
+        function selectCollection(collection) {
+            const cleanName = collection.name.trim();
+            selectedCollection = {
+                ...collection,
+                name: cleanName
+            };
+
+            document.querySelectorAll('.collection-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+
+            const safeSelector = CSS.escape(collection.name);
+            const selectedElement = document.querySelector(`[data-name="${safeSelector}"]`);
+            
+            if (selectedElement) {
+                selectedElement.classList.add('selected');
+            }
+
+            document.getElementById('btnContinue').disabled = false;
+                
+            console.log("🔍 Colección seleccionada lista para enviar:", selectedCollection.name);
+        }
+
+        function continueToUpload() {
+            if (!selectedCollection) return;
+
+            document.getElementById('selectedCollectionName').textContent = selectedCollection.name;
+            showModule('module-upload');
+        }
+
+        // ============ CARGA DE ARCHIVOS ============
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+
+        uploadZone.onclick = () => fileInput.click();
+
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.style.borderColor = 'var(--gobpe-blue-700)';
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.style.borderColor = '';
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.style.borderColor = '';
+            handleFiles(Array.from(e.dataTransfer.files));
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(Array.from(e.target.files));
+        });
+
+        function handleFiles(files) {
+            const validTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+
+            files.forEach(file => {
+                if (!validTypes.includes(file.type)) {
+                    showError(`Formato no válido: ${file.name}`);
+                    return;
+                }
+
+                if (!selectedFiles.find(f => f.name === file.name)) {
+                    selectedFiles.push(file);
+                }
+            });
+
+            renderFileList();
+        }
+
+        function renderFileList() {
+            const list = document.getElementById('fileList');
+
+            if (!selectedFiles.length) {
+                list.style.display = 'none';
+                document.getElementById('uploadButtons').style.display = 'none';
+                return;
+            }
+
+            list.style.display = 'block';
+            document.getElementById('uploadButtons').style.display = 'flex';
+
+            list.innerHTML = selectedFiles.map((file, index) => `
+                <div class="file-item">
+                    <div class="file-info">
+                        <span class="file-icon">${file.name.endsWith('.pdf') ? '📕' : '📘'}</span>
+                        <div>
+                            <div class="file-name">${file.name}</div>
+                            <div style="font-size: 12px; color: var(--gobpe-neutral-600);">
+                                ${(file.size / 1024).toFixed(1)} KB
+                            </div>
+                        </div>
+                    </div>
+                    <button class="remove-btn" onclick="removeFile(${index})">×</button>
+                </div>
+            `).join('');
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            renderFileList();
+        }
+
+        // ============ BÚSQUEDA ============
+        const floatingBtn = document.getElementById('floatingSearchBtn');
+        const searchPanel = document.getElementById('searchPanel');
+
+        floatingBtn.onclick = toggleSearchPanel;
+
+        function toggleSearchPanel() {
+            searchPanel.classList.toggle('active');
+
+            if (selectedCollection) {
+                document.getElementById('searchCollectionName').textContent =
+                    selectedCollection.name;
+            }
+        }
+
+        // ============ VALIDACIÓN ============
+        async function validateFiles() {
+            if (!selectedFiles.length) {
+                showError('Selecciona al menos un archivo');
+                return;
+            }
+
+            const formData = new FormData();
+            selectedFiles.forEach(f => formData.append('files', f));
+
+            try {
+                const response = await fetch(
+                    `${VECTORIZATION_API}/upload-batch?collection_name=${selectedCollection.name}`,
+                    { method: 'POST', body: formData }
+                );
+
+                validationData = await response.json();
+                currentBatchId = validationData.batch_id;
+
+                // Verificar si hay duplicados
+                const duplicates = validationData.files.filter(f => f.is_duplicate);
+
+                if (duplicates.length > 0) {
+                    duplicateFiles = duplicates;
+                    showDuplicateModal(duplicates);
+                } else {
+                    displayValidationResults(validationData);
+                    showModule('module-validation');
+                }
+
+            } catch (error) {
+                showError('Error al validar archivos');
+            }
+        }
+
+        function showDuplicateModal(duplicates) {
+            const list = document.getElementById('duplicateList');
+            list.innerHTML = duplicates.map(dup => `
+                <div class="duplicate-item">
+                    <div class="duplicate-item-name">📄 ${dup.filename}</div>
+                    <div class="duplicate-item-info">
+                        Ya existe con ${dup.duplicate_chunks} fragmento(s) vectorizado(s)
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('duplicateModal').classList.add('active');
+        }
+
+        function closeDuplicateModal() {
+            document.getElementById('duplicateModal').classList.remove('active');
+            // Limpiar archivos duplicados de la selección
+            selectedFiles = selectedFiles.filter(f =>
+                !duplicateFiles.find(dup => dup.filename === f.name)
+            );
+            renderFileList();
+        }
+
+        async function confirmReplacement() {
+            document.getElementById('duplicateModal').classList.remove('active');
+
+            try {
+                // Obtener file_ids de los duplicados
+                const fileIds = duplicateFiles.map(d => d.file_id);
+
+                // Llamar al endpoint para eliminar duplicados
+                await fetch(
+                    `${VECTORIZATION_API}/confirm-duplicates/${currentBatchId}?${fileIds.map(id => `files_to_replace=${id}`).join('&')}`,
+                    { method: 'POST' }
+                );
+
+                // Mostrar validación y continuar
+                displayValidationResults(validationData);
+                showModule('module-validation');
+
+            } catch (error) {
+                showError('Error al confirmar reemplazo');
+            }
+        }
+
+        function displayValidationResults(data) {
+            const list = document.getElementById('validationList');
+
+            list.innerHTML = data.files.map(file => {
+                const isValid = file.status === 'validated';
+                const isDuplicate = file.is_duplicate;
+
+                let cardClass = 'success';
+                let icon = '✅';
+
+                if (isDuplicate) {
+                    cardClass = 'duplicate';
+                    icon = '📄';
+                } else if (!isValid) {
+                    cardClass = 'error';
+                    icon = '❌';
+                }
+
+                return `
+                    <div class="validation-file-card ${cardClass}">
+                        <div class="validation-header">
+                            <span style="font-size: 24px;">${icon}</span>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: var(--gobpe-gray-800);">
+                                    ${file.filename}
+                                </div>
+                                ${isDuplicate ? `
+                                    <div style="font-size: 13px; color: var(--gobpe-orange-800); margin-top: 4px;">
+                                        Documento reemplazado (${file.duplicate_chunks} chunks eliminados)
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        ${isValid ? `
+                            <div class="validation-meta">
+                                <span>📄 ${file.total_pages} página(s)</span>
+                                <span>🖼️ ${file.total_images} imagen(es)</span>
+                                <span>📊 ${file.total_tables} tabla(s)</span>
+                            </div>
+                            ${file.has_non_textual_content ? `
+                                <div style="margin-top: 12px; font-size: 13px; color: var(--gobpe-orange-800);">
+                                    ⚠️ Contiene elementos no textuales (solo se vectorizará el texto)
+                                </div>
+                            ` : ''}
+                        ` : `
+                            <div style="color: var(--gobpe-red-700); margin-top: 8px; font-size: 14px;">
+                                ${file.error_message}
+                            </div>
+                        `}
+                    </div>
+                `;
+            }).join('');
+
+            const hasValidFiles = data.files.some(f => f.status === 'validated');
+            document.getElementById('btnStartVectorization').disabled = !hasValidFiles;
+        }
+
+        // ============ VECTORIZACIÓN ============
+        async function startVectorization() {
+            showModule('module-vectorization');
+
+            try {
+                await fetch(
+                    `${VECTORIZATION_API}/vectorize-batch/${currentBatchId}?collection_name=${selectedCollection.name}`,
+                    { method: 'POST' }
+                );
+
+                pollProgress();
+
+            } catch (error) {
+                showError('Error al iniciar vectorización');
+            }
+        }
+
+        async function pollProgress() {
+            const interval = setInterval(async () => {
+                try {
+                    const response = await fetch(
+                        `${VECTORIZATION_API}/batch-progress/${currentBatchId}`
+                    );
+                    const data = await response.json();
+
+                    // Texto de archivo actual
+                    document.getElementById('progressText').textContent =
+                        data.current_file
+                            ? `Procesando: ${data.current_file}`
+                            : 'Procesando documentos...';
+
+                    // Actualizar barra
+                    const progress = data.overall_progress || 0;
+                    document.getElementById('progressBar').style.width = `${progress}%`;
+                    document.getElementById('progressPercent').textContent = `${progress}%`;
+
+                    const filesDiv = document.getElementById('filesProgress');
+                    filesDiv.innerHTML = '';
+                    data.files_status.forEach(file => {
+                        filesDiv.innerHTML += `
+                            <p style="margin:4px 0;">
+                                ${file.filename} - <strong>${file.status}</strong> (${file.progress}%)
+                            </p>
+                        `;
+                    });
+
+                    // Cuando termina
+                    if (progress >= 100) {
+                        clearInterval(interval);
+
+                        document.getElementById('progressText').textContent =
+                            'Completado';
+
+                        document.getElementById('mainSpinner').classList.remove('spinner');
+                        document.getElementById('completionMessage').style.display = 'block';
+                        document.querySelector('#module-vectorization > h2').style.display = 'none';
+                    }
+
+                } catch (error) {
+                    clearInterval(interval);
+                    console.error('Error consultando progreso', error);
+                }
+            }, 2000);
+        }
+
+        // ============ BÚSQUEDA ============
+        async function performSearch(event) {
+            event.preventDefault();
+
+            const query = document.getElementById('searchQuery').value;
+            const topK = document.getElementById('topK').value;
+
+            try {
+                const response = await fetch(
+                    `${VECTORIZATION_API}/search?collection_name=${selectedCollection.name}`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ query, top_k: parseInt(topK) })
+                    }
+                );
+
+                const data = await response.json();
+                displaySearchResults(data);
+
+            } catch (error) {
+                showError('Error en búsqueda');
+            }
+        }
+
+        function displaySearchResults(data) {
+            const results = document.getElementById('searchResults');
+            results.style.display = 'block';
+
+            if (!data.results || !data.results.length) {
+                results.innerHTML = '<p style="text-align: center; color: var(--gobpe-neutral-600); padding: 20px;">No se encontraron resultados</p>';
+                return;
+            }
+
+            results.innerHTML = data.results.map(r => `
+                <div class="result-card">
+                    <div class="result-score">
+                        ⭐ ${(r.score * 100).toFixed(1)}%
+                    </div>
+                    <div style="font-weight: 600; margin-bottom: 8px;">
+                        📄 ${r.filename} (Fragmento #${r.chunk})
+                    </div>
+                    <div class="result-text">${r.text}</div>
+                </div>
+            `).join('');
+        }
+
+        // ============ NAVEGACIÓN ============
+        function showModule(id) {
+            document.querySelectorAll('.module').forEach(m => m.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function backToCollections() {
+            selectedFiles = [];
+            fileInput.value = '';
+            renderFileList();
+            showModule('module-collections');
+        }
+
+        function backToUpload() {
+            showModule('module-upload');
+        }
+
+        function resetToCollections() {
+            selectedFiles = [];
+            selectedCollection = null;
+            currentBatchId = null;
+            duplicateFiles = [];
+            validationData = null;
+            fileInput.value = '';
+            document.getElementById('searchResults').style.display = 'none';
+            document.getElementById('searchQuery').value = '';
+            document.getElementById('searchCollectionInput').value = ''; // Limpiar búsqueda
+            showModule('module-collections');
+            loadCollections();
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('uploadError');
+            errorDiv.className = 'alert alert-error';
+            errorDiv.textContent = '❌ ' + message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 4000);
+        }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCollections();
+        });
+    </script>
+</body>
+</html>
