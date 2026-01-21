@@ -123,8 +123,8 @@ async def health_check():
         "service": "document-vectorization",
         "version": settings.API_VERSION,
         "endpoints": {
-            "interfaz_web": "http://localhost:8100/vectorizacion",
-            "api_docs": "http://localhost:8100/docs"
+            "interfaz_web": "http://91.99.108.245:8100/vectorizacion",
+            "api_docs": "http://91.99.108.245:8100/docs"
         }
     }
 
