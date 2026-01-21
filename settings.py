@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     ALLOWED_EXTENSIONS: List[str] = [".pdf", ".docx"]
 
     # ================= Qdrant =================
-    QDRANT_HOST: str = "localhost"
+    QDRANT_HOST: str = "91.99.108.245"
     QDRANT_PORT: int = 6333
 
     # ================= API Externa =================
