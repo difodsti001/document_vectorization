@@ -1232,57 +1232,21 @@
         async function pollProgress() {
             const interval = setInterval(async () => {
                 try {
-                    const response = await fetch(
-                        ${VECTORIZATION_API}/batch-progress/${currentBatchId}
-                    );
-        
-                    // ✅ MANEJO DE ERROR HTTP
-                    if (!response.ok) {
-                        console.warn("⚠️ Batch no encontrado o expirado");
-                        clearInterval(interval);
-                        showError("El proceso se perdió. Vuelve a cargar los documentos.");
-                        return;
-                    }
-        
+                    const response = await fetch(`${VECTORIZATION_API}/batch-progress/${currentBatchId}`);
                     const data = await response.json();
-        
-                    // ✅ VALIDACIÓN DE ESTRUCTURA
-                    if (!data.files_status || !Array.isArray(data.files_status)) {
-                        console.warn("⚠️ Estado de batch inválido", data);
-                        return;
-                    }
-        
+
                     document.getElementById('progressText').textContent =
-                        data.current_file
-                            ? Procesando: ${data.current_file}
-                            : 'Procesando documentos...';
-        
-                    const progress = data.overall_progress || 0;
-                    document.getElementById('progressBar').style.width = ${progress}%;
-                    document.getElementById('progressPercent').textContent = ${progress}%;
-        
-                    const filesDiv = document.getElementById('filesProgress');
-                    filesDiv.innerHTML = '';
-                    data.files_status.forEach(file => {
-                        filesDiv.innerHTML += `
-                            <p style="margin:4px 0;">
-                                ${file.filename} - <strong>${file.status}</strong> (${file.progress}%)
-                            </p>
-                        `;
-                    });
-        
-                    if (progress >= 100) {
+                        data.current_file ? `Procesando: ${data.current_file}` : 'Procesando...';
+
+                    if (data.overall_progress >= 100) {
                         clearInterval(interval);
-                        document.getElementById('progressText').textContent = 'Completado';
-                        document.getElementById('mainSpinner').classList.remove('spinner');
                         document.getElementById('completionMessage').style.display = 'block';
                         document.querySelector('#module-vectorization > h2').style.display = 'none';
+                        document.getElementById('progressText').parentElement.style.display = 'none';
                     }
-        
+
                 } catch (error) {
                     clearInterval(interval);
-                    console.error('Error consultando progreso', error);
-                    showError('Error consultando progreso');
                 }
             }, 2000);
         }
