@@ -1233,21 +1233,34 @@
             const interval = setInterval(async () => {
                 try {
                     const response = await fetch(
-                        `${VECTORIZATION_API}/batch-progress/${currentBatchId}`
+                        ${VECTORIZATION_API}/batch-progress/${currentBatchId}
                     );
+        
+                    // ✅ MANEJO DE ERROR HTTP
+                    if (!response.ok) {
+                        console.warn("⚠️ Batch no encontrado o expirado");
+                        clearInterval(interval);
+                        showError("El proceso se perdió. Vuelve a cargar los documentos.");
+                        return;
+                    }
+        
                     const data = await response.json();
-
-                    // Texto de archivo actual
+        
+                    // ✅ VALIDACIÓN DE ESTRUCTURA
+                    if (!data.files_status || !Array.isArray(data.files_status)) {
+                        console.warn("⚠️ Estado de batch inválido", data);
+                        return;
+                    }
+        
                     document.getElementById('progressText').textContent =
                         data.current_file
-                            ? `Procesando: ${data.current_file}`
+                            ? Procesando: ${data.current_file}
                             : 'Procesando documentos...';
-
-                    // Actualizar barra
+        
                     const progress = data.overall_progress || 0;
-                    document.getElementById('progressBar').style.width = `${progress}%`;
-                    document.getElementById('progressPercent').textContent = `${progress}%`;
-
+                    document.getElementById('progressBar').style.width = ${progress}%;
+                    document.getElementById('progressPercent').textContent = ${progress}%;
+        
                     const filesDiv = document.getElementById('filesProgress');
                     filesDiv.innerHTML = '';
                     data.files_status.forEach(file => {
@@ -1257,22 +1270,19 @@
                             </p>
                         `;
                     });
-
-                    // Cuando termina
+        
                     if (progress >= 100) {
                         clearInterval(interval);
-
-                        document.getElementById('progressText').textContent =
-                            'Completado';
-
+                        document.getElementById('progressText').textContent = 'Completado';
                         document.getElementById('mainSpinner').classList.remove('spinner');
                         document.getElementById('completionMessage').style.display = 'block';
                         document.querySelector('#module-vectorization > h2').style.display = 'none';
                     }
-
+        
                 } catch (error) {
                     clearInterval(interval);
                     console.error('Error consultando progreso', error);
+                    showError('Error consultando progreso');
                 }
             }, 2000);
         }
