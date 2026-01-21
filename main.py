@@ -535,7 +535,7 @@ if __name__ == "__main__":
     print("="*70)
     print(f"📍 Interfaz Web: http://{settings.API_HOST}:{settings.API_PORT}/vectorizacion")
     print(f"📖 Documentación: http://{settings.API_HOST}:{settings.API_PORT}/docs")
-    print(f"🔧 API Colecciones: http://localhost:9000/docs")
+    print(f"🔧 API Colecciones: http://91.99.108.245:9000/docs")
     print("="*70 + "\n")
     
     uvicorn.run(
